@@ -1,0 +1,142 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    app: {{ .Values.name }}
+  name: {{ .Values.name }}
+spec:
+  selector:
+    deploymentConfig: {{ .Values.name }}
+  template: 
+    metadata:
+      labels:
+        deploymentConfig: {{ .Values.name }}
+        name: {{ .Values.name }}
+    spec:
+      # --------------------------------------------------
+      # ConfigMap associated with the application itself
+      # --------------------------------------------------
+      volumes:           
+        - name: config-volume
+          configMap:
+            name: {{ .Values.deploymentConfig.configmap }} 
+      containers:
+        - name: {{ .Values.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          # -----------------------------------
+          # Ports setup
+          # -----------------------------------
+          ports:
+            - containerPort: {{ .Values.deploymentConfig.http }} 
+              name: http
+              protocol: TCP
+            - containerPort: {{ .Values.deploymentConfig.health }} 
+              name: health
+              protocol: TCP
+            - containerPort: {{ .Values.deploymentConfig.monitoring }} 
+              name: monitoring
+              protocol: TCP
+            - containerPort: {{ .Values.deploymentConfig.jolokia }} 
+              name: jolokia
+              protocol: TCP            
+            # --------------------------------------------
+            # - Environments Variables Setup
+            # --------------------------------------------
+          env:
+            - name: TZ
+              value: America/Argentina/Buenos_Aires
+            - name: JAVA_OPTIONS
+              value: {{ .Values.javaoptions }}
+# ------------------------------------------------------------- 
+# ---------> Agregar Variables de entorno desde Secrets
+            - name: LC_ALL
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-general
+                  key: LC_ALL
+            - name: ambiente
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-general
+                  key: ambiente
+            - name: gwRelativeHost
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-general
+                  key: gwRelativeHost
+            - name: msBranch
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-general
+                  key: msBranch
+            - name: msRelativeHost
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-general
+                  key: msRelativeHost
+            - name: sigahost
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-databases
+                  key: sigahost
+            - name: sigaport
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-databases
+                  key: sigaport  
+            - name: sigasrv
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-databases
+                  key: sigasrv        
+            - name: sigamsdbpwd
+              valueFrom:
+                secretKeyRef:
+                  name: la2da-conf-databases
+                  key: sigamsdbpwd
+# <--------  Fin Agregar Variables de entorno desde Secrets
+# -------------------------------------------------------------
+          volumeMounts:
+          - name: config-volume
+            mountPath: /deployments/application.properties
+            subPath: application.properties
+          - name: config-volume
+            mountPath: /deployments/agent/config.yaml
+            subPath: config.yaml
+          # -----------------------------------
+          # Readiness and liveness probes setup
+          # -----------------------------------
+          readinessProbe:
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            httpGet:
+              path: {{ .Values.readinessProbe.httpGet.path }}
+              port: {{ .Values.readinessProbe.httpGet.port }} 
+              scheme: {{ .Values.readinessProbe.httpGet.scheme }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          livenessProbe:              
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            httpGet:
+              path: {{ .Values.livenessProbe.httpGet.path }}
+              port: {{ .Values.livenessProbe.httpGet.port }} 
+              scheme: {{ .Values.livenessProbe.httpGet.scheme }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          # -----------------------------------
+          # Resource setup
+          # -----------------------------------
+          resources:
+            limits:
+              cpu: {{ .Values.deploymentConfig.resources.limits.cpu }}
+              memory: {{ .Values.deploymentConfig.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.deploymentConfig.resources.requests.cpu }}
+              memory: {{ .Values.deploymentConfig.resources.requests.memory }}
+  triggers: []
+  replicas: {{ .Values.deploymentConfig.replicas }} 
+  strategy: 
+    type: Rolling

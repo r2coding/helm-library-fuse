@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Values.service.name }}
+  name: {{ .Values.service.name }}
+spec:
+  ports:
+    - port: {{ .Values.service.port.http.port }}
+      protocol: {{ .Values.service.port.http.protocol }}
+      targetPort: {{ .Values.service.port.http.targetPort }}
+      name: {{ .Values.service.port.http.name }} 
+    - port: {{ .Values.service.port.health.port }}
+      protocol: {{ .Values.service.port.health.protocol }}
+      targetPort: {{ .Values.service.port.health.targetPort }}
+      name: {{ .Values.service.port.health.name }} 
+    - port: {{ .Values.service.port.monitoring.port }}
+      protocol: {{ .Values.service.port.monitoring.protocol }}
+      targetPort: {{ .Values.service.port.monitoring.targetPort }}
+      name: {{ .Values.service.port.monitoring.name }}
+    - port: {{ .Values.service.port.jolokia.port }}
+      protocol: {{ .Values.service.port.jolokia.protocol }}
+      targetPort: {{ .Values.service.port.jolokia.targetPort }}
+      name: {{ .Values.service.port.jolokia.name }}  
+  selector:
+    deploymentConfig: {{ .Values.name }}
+  sessionAffinity: {{ .Values.service.sessionAffinity }}
+  type: {{ .Values.service.type }}

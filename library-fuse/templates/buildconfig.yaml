@@ -1,0 +1,22 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    {{- include "library-fuse.labels" . | nindent 4 }}
+  name: {{ include "library-fuse.fullname" . }}
+spec:
+  selector:
+    deploymentConfig: {{ include "library-fuse.fullname" . }}
+  runPolicy: Serial     
+  source: 
+    type: Binary
+  strategy: 
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        namespace: openshift
+  output: 
+    to:
+      kind: ImageStreamTag
+      name: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

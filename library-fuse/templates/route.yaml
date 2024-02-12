@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    haproxy.router.openshift.io/timeout: 300s
+  labels:
+    app: {{ .Values.name }}
+  name: {{ .Values.name }}
+spec:
+  to:
+    kind: Service
+    name: {{ .Values.service.name }}
+    weight: 100
+  tls:
+    termination: edge
+  wildcardPolicy: None
